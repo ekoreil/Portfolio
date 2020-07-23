@@ -1,0 +1,367 @@
+---
+title: "KoalaKare Project Code"
+author: "Ritu Shah"
+date: "November 11, 2019"
+output: html_document
+---
+
+```{r clear environment, load packages}
+#clear environment
+remove(list = ls())
+
+#load packages
+library(dplyr)
+
+#important swan data from directory and rename
+swan <- da32961.0001
+
+#create workable dataset with variables we need and no NA values
+swan_clean <- select(swan, DHAS10, E2AVE10, FSH10, SHBG10, T10, TSH10, DEPRESS10, 
+                     AGE10, RACE, THYROI110, STEROI110, FERTIL110,
+                     BCP110, ESTROG110, ESTRNJ110, COMBIN110, 
+                     PROGES110, OHRM_110, THYROID10, PREGNAN10, STRTPER10, BLEEDNG10)
+swan_clean <- na.omit(swan_clean)
+
+```
+
+```{r data cleaning}
+## DATA CLEANING
+
+#recode depression variable
+str(swan_clean$DEPRESS10)
+
+swan_clean$DEPRESS10 <- as.numeric(swan_clean$DEPRESS10)
+
+swan_clean$DEPRESS_new <- 9
+swan_clean$DEPRESS_new[swan_clean$DEPRESS10 == 1| swan_clean$DEPRESS10 == 2] <- 0
+swan_clean$DEPRESS_new[swan_clean$DEPRESS10 == 3| swan_clean$DEPRESS10 == 4] <- 1
+
+
+#recode race variable
+swan_clean$RACE <- as.factor(swan_clean$RACE)
+
+swan_clean$WHITE <- 0
+swan_clean$BLACK <- 0
+swan_clean$OTHER <- 0
+
+swan_clean$WHITE[swan_clean$RACE == 4] <- 1
+swan_clean$OTHER[swan_clean$RACE == 2 | swan_clean$RACE == 3] <- 1
+swan_clean$BLACK[swan_clean$RACE == 1] <- 1
+
+table(swan_clean$RACE, swan_clean$WHITE)
+table(swan_clean$RACE, swan_clean$BLACK)
+table(swan_clean$RACE, swan_clean$OTHER)
+
+#recode thyroid variable
+swan_clean$THYROI110 <- as.numeric(swan_clean$THYROI110)
+
+swan_clean$THYROIDMED <- 9
+swan_clean$THYROIDMED[swan_clean$THYROI110 == 1] <- 0
+swan_clean$THYROIDMED[swan_clean$THYROI110 == 2] <- 1
+
+table(swan_clean$THYROI110, swan_clean$THYROIDMED)
+
+#recode steroid variable
+swan_clean$STEROI110 <- as.numeric(swan_clean$STEROI110)
+
+swan_clean$STEROIDMED <- 9
+swan_clean$STEROIDMED[swan_clean$STEROI110 == 1] <- 0
+swan_clean$STEROIDMED[swan_clean$STEROI110 == 2] <- 1
+
+table(swan_clean$STEROI110, swan_clean$STEROIDMED)
+
+#recode birth control pills variable
+swan_clean$BCP110 <- as.numeric(swan_clean$BCP110)
+
+swan_clean$BCP <- 9
+swan_clean$BCP[swan_clean$BCP110 == 1] <- 0
+swan_clean$BCP[swan_clean$BCP110 == 2] <- 1
+
+table(swan_clean$BCP110, swan_clean$BCP)
+
+#recode estrogen medication variable
+swan_clean$ESTROG110 <- as.numeric(swan_clean$ESTROG110)
+swan_clean$ESTRNJ110 <- as.numeric(swan_clean$ESTRNJ110)
+
+swan_clean$ESTROGEN <- 9
+swan_clean$ESTROGEN[swan_clean$ESTROG110 == 1 & swan_clean$ESTRNJ110 == 1] <- 0
+swan_clean$ESTROGEN[swan_clean$ESTROG110 == 2 & swan_clean$ESTRNJ110 == 1] <- 1
+swan_clean$ESTROGEN[swan_clean$ESTROG110 == 1 & swan_clean$ESTRNJ110 == 2] <- 1
+swan_clean$ESTROGEN[swan_clean$ESTROG110 == 2 & swan_clean$ESTRNJ110 == 2] <- 1
+
+table(swan_clean$ESTROG110, swan_clean$ESTROGEN)
+table(swan_clean$ESTRNJ110, swan_clean$ESTROGEN)
+
+#recode progesterone medication variable
+swan_clean$PROGES110 <- as.numeric(swan_clean$PROGES110)
+
+swan_clean$PROGES <- 9
+swan_clean$PROGES[swan_clean$PROGES110 == 1] <- 0
+swan_clean$PROGES[swan_clean$PROGES110 == 2] <- 1
+
+table(swan_clean$PROGES110, swan_clean$PROGES)
+
+#recode other hormone variable
+swan_clean$OHRM_110 <- as.numeric(swan_clean$OHRM_110)
+
+swan_clean$OTHERHRM <- 9
+swan_clean$OTHERHRM[swan_clean$OHRM_110 == 1] <- 0
+swan_clean$OTHERHRM[swan_clean$OHRM_110 == 2] <- 1
+
+table(swan_clean$OHRM_110, swan_clean$OTHERHRM)
+
+#recode thyroid activity variable
+swan_clean$THYROID10 <- as.numeric(swan_clean$THYROID10)
+
+swan_clean$THYROIDPROB <- 9
+swan_clean$THYROIDPROB[swan_clean$THYROID10 == 1] <- 0
+swan_clean$THYROIDPROB[swan_clean$THYROID10 == 2] <- 1
+
+table(swan_clean$THYROID10, swan_clean$THYROIDPROB)
+
+#recode pregnancy variable
+swan_clean$PREGNAN10 <- as.numeric(swan_clean$PREGNAN10)
+
+swan_clean$PREG <- 9
+swan_clean$PREG[swan_clean$PREGNAN10 == 1] <- 0
+swan_clean$PREG[swan_clean$PREGNAN10 == 2] <- 1
+
+table(swan_clean$PREGNAN10, swan_clean$PREG) 
+##will remove from analysis as no women are pregnant
+
+#recode menstrual period in last week variable
+swan_clean$STRTPER10 <- as.numeric(swan_clean$STRTPER10)
+
+swan_clean$PERIOD <- 9
+swan_clean$PERIOD[swan_clean$STRTPER10 == 1] <- 0
+swan_clean$PERIOD[swan_clean$STRTPER10 == 2] <- 1
+
+table(swan_clean$STRTPER10, swan_clean$PERIOD)
+
+#recode menopause variable
+swan_clean$BLEEDNG10 <- as.numeric(swan_clean$BLEEDNG10)
+
+swan_clean$MENOPAUSE <- 9
+swan_clean$MENOPAUSE[swan_clean$BLEEDNG10 == 1] <- 0
+swan_clean$MENOPAUSE[swan_clean$BLEEDNG10 == 2] <- 1
+
+table(swan_clean$BLEEDNG10, swan_clean$MENOPAUSE)
+
+#create new clean dataset
+swan_final <- select(swan_clean, DHAS10, E2AVE10, FSH10, SHBG10, T10, TSH10, DEPRESS_new, 
+                     AGE10, WHITE, BLACK, OTHER, THYROIDMED, STEROIDMED, BCP, 
+                     ESTROGEN, PROGES, OTHERHRM, THYROIDPROB, PERIOD, MENOPAUSE)
+
+write.csv(swan_final, file = "analyticdataset.csv")
+
+```
+
+```{r descriptive analysis}
+
+## DESCRIPTIVE ANALYSIS
+
+#subset for depressed and not depressed
+swan_notdepr <- subset(swan_final, DEPRESS_new == 0)
+swan_depressed <- subset(swan_final, DEPRESS_new == 1)
+
+table(swan_final$DEPRESS_new)
+
+#average age
+mean(swan_final$AGE10)
+mean(swan_depressed$AGE10)
+mean(swan_notdepr$AGE10)
+
+#percent white
+prop.table(table(swan_final$WHITE))
+prop.table(table(swan_depressed$WHITE))
+prop.table(table(swan_notdepr$WHITE))
+
+#percent black
+prop.table(table(swan_final$BLACK))
+prop.table(table(swan_depressed$BLACK))
+prop.table(table(swan_notdepr$BLACK))
+
+#percent other
+prop.table(table(swan_final$OTHER))
+prop.table(table(swan_depressed$OTHER))
+prop.table(table(swan_notdepr$OTHER))
+
+#average DHAS
+mean(swan_final$DHAS10)
+mean(swan_depressed$DHAS10)
+mean(swan_notdepr$DHAS10)
+
+#average estradiol
+mean(swan_final$E2AVE10)
+mean(swan_depressed$E2AVE10)
+mean(swan_notdepr$E2AVE10)
+
+#average FSH
+mean(swan_final$FSH10)
+mean(swan_depressed$FSH10)
+mean(swan_notdepr$FSH10)
+
+#average SHBG
+mean(swan_final$SHBG10)
+mean(swan_depressed$SHBG10)
+mean(swan_notdepr$SHBG10)
+
+#average testosterone
+mean(swan_final$T10)
+mean(swan_depressed$T10)
+mean(swan_notdepr$T10)
+
+#average TSH
+mean(swan_final$TSH10)
+mean(swan_depressed$TSH10)
+mean(swan_notdepr$TSH10)
+
+#percent using thyroid med
+prop.table(table(swan_final$THYROIDMED))
+prop.table(table(swan_depressed$THYROIDMED))
+prop.table(table(swan_notdepr$THYROIDMED))
+
+#percent using steroid med
+prop.table(table(swan_final$STEROIDMED))
+prop.table(table(swan_depressed$STEROIDMED))
+prop.table(table(swan_notdepr$STEROIDMED))
+
+#percent using birth control pill
+prop.table(table(swan_final$BCP))
+prop.table(table(swan_depressed$BCP))
+prop.table(table(swan_notdepr$BCP))
+
+#percent using estrogen med
+prop.table(table(swan_final$ESTROGEN))
+prop.table(table(swan_depressed$ESTROGEN))
+prop.table(table(swan_notdepr$ESTROGEN))
+
+#percent using progesterone med
+prop.table(table(swan_final$PROGES))
+prop.table(table(swan_depressed$PROGES))
+prop.table(table(swan_notdepr$PROGES))
+
+#percent using other hormone med
+prop.table(table(swan_final$OTHERHRM))
+prop.table(table(swan_depressed$OTHERHRM))
+prop.table(table(swan_notdepr$OTHERHRM))
+
+#percent using reporting thyroid probelm
+prop.table(table(swan_final$THYROIDPROB))
+prop.table(table(swan_depressed$THYROIDPROB))
+prop.table(table(swan_notdepr$THYROIDPROB))
+
+#percent started menstrual cycle in last week
+prop.table(table(swan_final$PERIOD))
+prop.table(table(swan_depressed$PERIOD))
+prop.table(table(swan_notdepr$PERIOD))
+
+#percent menopausal
+prop.table(table(swan_final$MENOPAUSE))
+prop.table(table(swan_depressed$MENOPAUSE))
+prop.table(table(swan_notdepr$MENOPAUSE))
+
+```
+
+```{r regression analysis}
+## REGRESSION ANALYSIS
+
+Model1 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10, data = swan_final)
+summary(Model1)
+
+Model2 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK + OTHER, data = swan_final)
+summary(Model2)
+
+#model 2 with only significant covariates
+Model3 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK, data = swan_final)
+summary(Model3)
+
+#add thyroidmed
+Model4 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + THYROIDMED, data = swan_final)
+summary(Model4)
+
+#remove thyroidmed
+#add steroidmed
+Model5 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + STEROIDMED, data = swan_final)
+summary(Model5)
+
+#keep steroidmed
+#add birthcontrol
+Model6 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + STEROIDMED + BCP, data = swan_final)
+summary(Model6)
+
+#remove birth control
+#add estrogen
+Model7 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + STEROIDMED + ESTROGEN, data = swan_final)
+summary(Model7)
+
+#remove estrogen
+#add progesterone
+Model8 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + STEROIDMED + PROGES, data = swan_final)
+summary(Model8)
+
+#remove progesterone
+#add other hormone
+Model9 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+              + STEROIDMED + OTHERHRM, data = swan_final)
+summary(Model9)
+
+#remove other hormone
+#add thyroid prob
+Model10 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+             + STEROIDMED + THYROIDPROB, data = swan_final)
+summary(Model10)
+
+#remove thyroidprob
+#add period
+Model11 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+               + STEROIDMED + PERIOD, data = swan_final)
+summary(Model11)
+
+#remove period
+#add menopause
+Model12 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+               + STEROIDMED + MENOPAUSE, data = swan_final)
+summary(Model12)
+
+#remove menopause
+Model13 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+               + STEROIDMED, data = swan_final)
+summary(Model13)
+
+#MODEL 13 IS WORKING FINAL MODEL
+
+#add back all other control variables
+
+Model14 <- glm(DEPRESS_new ~ DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 + AGE10 + WHITE + BLACK
+               + STEROIDMED + THYROIDMED + BCP + ESTROGEN + PROGES + OTHERHRM + THYROIDPROB + PERIOD + MENOPAUSE, data = swan_final)
+summary(Model14)
+
+#reorder variables for table
+
+Model15 <- glm(DEPRESS_new ~ AGE10 + WHITE + BLACK + DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 
+               + THYROIDMED + STEROIDMED + BCP + ESTROGEN + PROGES + OTHERHRM + THYROIDPROB + PERIOD + MENOPAUSE, data = swan_final)
+summary(Model15)
+
+```
+
+```{r inferential analysis}
+## INFERENTIAL ANALYSIS
+
+#slope intercepts, standard errors and p values
+Model15 <- glm(DEPRESS_new ~ AGE10 + WHITE + BLACK + DHAS10 + E2AVE10 + FSH10 + SHBG10 + T10 + TSH10 
+               + THYROIDMED + STEROIDMED + BCP + ESTROGEN + PROGES + OTHERHRM + THYROIDPROB + PERIOD + MENOPAUSE, data = swan_final)
+summary(Model15)
+
+
+#odds ratio and confidence interval calculation
+exp(cbind(coef(Model15), confint(Model15)))
+
+
+```
+
